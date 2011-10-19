@@ -1,0 +1,8 @@
+div#gmap {
+	width: 480px;
+	height: 260px;
+	border: 1px solid #000000;
+}
+button#gcb {
+	margin-top: 10px;
+}

@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="view_partner_address_form1_inheritg">
+            <field name="name">res.partner.address.form1.inheritg</field>
+            <field name="model">res.partner.address</field>
+            <field name="inherit_id" ref="base.view_partner_address_form1"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group colspan="6" col="6">
+                        <separator string="Map" colspan="6" />
+                        <field name="lat" colspan="1" />
+                        <field name="lng" colspan="1" />
+                        <field name="map" widget="gmap" colspan="6" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+<!--
+        <record model="ir.ui.view" id="view_partner_address_form2_inheritg">
+            <field name="name">res.partner.address.form2.inheritg</field>
+            <field name="model">res.partner.address</field>
+            <field name="inherit_id" ref="base.view_partner_address_form2"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form>
+                    <newline />
+                    <field name="lat" />
+                    <field name="lng" />
+                    <field name="map" widget="gmap" />
+                </form>
+            </field>
+        </record>
+-->
+
+        <record model="ir.ui.view" id="view_partner_form_inheritg">
+            <field name="name">res.partner.form.inheritg</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='address']/form" position="inside">
+                    <group colspan="6" col="6">
+                        <separator string="Map" colspan="6" />
+                        <field name="lat" colspan="1" />
+                        <field name="lng" colspan="1" />
+                        <field name="map" widget="gmap" colspan="6" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
