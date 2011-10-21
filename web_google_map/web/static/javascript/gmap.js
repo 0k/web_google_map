@@ -60,7 +60,7 @@ jQuery(function() {
 				alert("Geocode was not successful for the following reason: " + status);
 			}
 		});
-	};
+	}
 	
 	function main() {
 		var latElement = $('[id$="lat"]'),
@@ -94,7 +94,7 @@ jQuery(function() {
 		} else {
 			gc.attr("disabled", "disabled");
 		}
-	};
+	}
 	
 	main();
 });
