@@ -24,9 +24,9 @@ from openerp.widgets import TinyInputWidget, register_widget
 
 
 class GMapWidget(TinyInputWidget):
-    template = 'web_map/widgets/templates/gmap.mako'
-    css = [CSSLink('web_map', 'css/gmap.css')]
-    javascript = [JSLink('web_map', 'javascript/gmap.js')]
+    template = 'web_google_map/widgets/templates/gmap.mako'
+    css = [CSSLink('web_google_map', 'css/gmap.css')]
+    javascript = [JSLink('web_google_map', 'javascript/gmap.js')]
 
     def __init__(self, *args, **kwargs):
         super(GMapWidget, self).__init__(*args, **kwargs)
