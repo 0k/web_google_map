@@ -21,7 +21,7 @@
 
 {
     'name': 'Web Map',
-    'version': '0.3.2',
+    'version': '0.3.3',
     'category': 'Added functionality / Widgets',
     'description': """
 InfoSreda OpenERP Web Map
