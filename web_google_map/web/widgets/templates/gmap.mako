@@ -3,3 +3,10 @@
 	<span>Get coordinates</span>
 </button>
 <div id="gmap"></div>
+<script>
+	jQuery(function() {
+		setTimeout(function() {
+			new OpenERPGoogleMap();
+		}, 500);
+	});
+</script>
