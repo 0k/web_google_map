@@ -44,25 +44,14 @@ res_partner_address()
 from web.controllers import main
 
 
-main.html_template = """<!DOCTYPE html>
-<html style="height: 100%%">
-    <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-        <title>OpenERP</title>
-        <link rel="shortcut icon" href="/web/static/src/img/favicon.ico" type="image/x-icon"/>
-        
-        %(css)s
-        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
-        %(js)s
-        <script type="text/javascript">
-            $(function() {
-                var s = new openerp.init(%(modules)s);
-                %(init)s
-            });
-        </script>
-    </head>
-    <body class="openerp" id="oe"></body>
-</html>
-"""
+def insert_before(source, search, insert_string):
+    idx = source.find(search)
+    return "%s%s%s" % (source[:idx], insert_string, source[idx:])
 
+
+def insert_js(src):
+    js_decl = '<script type="text/javascript" src="%s"></script>\n        ' % src
+    main.html_template = insert_before(main.html_template, '%(js)', js_decl)
+
+
+insert_js('http://maps.googleapis.com/maps/api/js?sensor=false')
