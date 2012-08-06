@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 
+
 class res_partner_address(osv.osv):
 
     _name = 'res.partner.address'
@@ -34,3 +35,34 @@ class res_partner_address(osv.osv):
     }
 
 res_partner_address()
+
+
+
+
+## XXXvlab: monkey patching html_template
+
+from web.controllers import main
+
+
+main.html_template = """<!DOCTYPE html>
+<html style="height: 100%%">
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+        <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+        <title>OpenERP</title>
+        <link rel="shortcut icon" href="/web/static/src/img/favicon.ico" type="image/x-icon"/>
+        
+        %(css)s
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script>
+        %(js)s
+        <script type="text/javascript">
+            $(function() {
+                var s = new openerp.init(%(modules)s);
+                %(init)s
+            });
+        </script>
+    </head>
+    <body class="openerp" id="oe"></body>
+</html>
+"""
+

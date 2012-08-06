@@ -9,11 +9,13 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form>
-                    <group colspan="6" col="6">
-                        <separator string="Map" colspan="6" />
+                    <group colspan="4" col="4">
+                        <separator string="Map" colspan="4" />
                         <field name="lat" colspan="1" />
                         <field name="lng" colspan="1" />
-                        <field name="map" widget="gmap" colspan="6" />
+                        <field name="map" nolabel="1"
+                               widget="gmap" colspan="4" />
+
                     </group>
                 </form>
             </field>
@@ -43,11 +45,12 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='address']/form" position="inside">
-                    <group colspan="6" col="6">
-                        <separator string="Map" colspan="6" />
+                    <group colspan="4" col="4">
+                        <separator string="Map" colspan="4" />
                         <field name="lat" colspan="1" />
                         <field name="lng" colspan="1" />
-                        <field name="map" widget="gmap" colspan="6" />
+                        <field name="map" nolabel="1"
+                               widget="gmap" colspan="4" />
                     </group>
                 </xpath>
             </field>
