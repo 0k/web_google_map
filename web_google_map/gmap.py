@@ -54,4 +54,4 @@ def insert_js(src):
     main.html_template = insert_before(main.html_template, '%(js)', js_decl)
 
 
-insert_js('http://maps.googleapis.com/maps/api/js?sensor=false')
+insert_js('//maps.googleapis.com/maps/api/js?sensor=false')
