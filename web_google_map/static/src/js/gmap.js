@@ -54,38 +54,13 @@ openerp.web_google_map = function(instance) {
       },
 
       get_lat_lng: function() {
-
-        // var editMode = (this.$latElement.is("input")) &&
-        //   !this.$latElement.attr("readonly") &&
-        //   !this.$latElement.attr("disabled");
-
         return [
-                getFixedValue(this.$latElement, this.edit_mode),
-                getFixedValue(this.$lngElement, this.edit_mode)
-                 ];
+            getFixedValue(this.$latElement, this.edit_mode),
+            getFixedValue(this.$lngElement, this.edit_mode)
+        ];
       },
 
       get_lat_lng_elements: function() {
-
-        // XXXvlab: any better way to parse the this.view.widgets ?
-        // var self = this;
-        // function find_widget_by_name(name) {
-        //   var widgets = [];
-        //   for (widget_name in self.view.widgets) {
-        //     var widget = self.view.widgets[widget_name];
-        //     if (widget.element_name == name) {
-        //       widgets.push(widget);
-        //     };
-        //   };
-        //   if (widgets.length != 1) {
-        //     console.log("Warning: find did not return exactly one element.")
-        //     console.debug(widgets)
-        //   };
-        //   return widgets;
-        // };
-
-        // var widget_lat = find_widget_by_name("field_lat_float")[0];
-        // var widget_lng = find_widget_by_name("field_lng_float")[0];
         this.widget_lat = this.view.fields['lat'];
         this.widget_lng = this.view.fields['lng'];
         if (this.edit_mode) {
@@ -113,8 +88,6 @@ openerp.web_google_map = function(instance) {
         this.get_lat_lng_elements();
 
         try {
-            // XXXvlab: Beurk ! any way to get this working to get
-            // this running after the div resizes !?
           $(document).ready(function () {
               setTimeout(function() {
                   self.draw_map();
@@ -124,10 +97,10 @@ openerp.web_google_map = function(instance) {
           if (this.edit_mode) {
             this.$refresh.click(function () {
                 self.draw_map();
-              });
+            });
             this.$gc.click(function () {
                 self.code_address();
-          });
+            });
           };
         } catch(e) {
           console.log(e);
@@ -162,11 +135,6 @@ openerp.web_google_map = function(instance) {
         this._super.apply(this, arguments);
         this.draw_map();
       },
-
-     // is_valid: function () {
-     //    debugger;
-     //    return this._super.apply(this, arguments);
-     //  },
 
       draw_map: function () {
         var self = this;
