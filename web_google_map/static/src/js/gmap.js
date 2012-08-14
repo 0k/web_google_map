@@ -1,13 +1,6 @@
 
 openerp.web_google_map = function(instance) {
 
-
-  var OPTIONS = {
-    zoom: 16,
-    mapTypeId: google.maps.MapTypeId.ROADMAP
-  };
-
-
   console = window.console;
 
   function getFixedValue(element, editMode) {
@@ -175,8 +168,28 @@ openerp.web_google_map = function(instance) {
      //    return this._super.apply(this, arguments);
      //  },
 
-        draw_map: function () {
+      draw_map: function () {
         var self = this;
+
+        // Load google map api if necessary
+        if (typeof(google) === "undefined" ||
+            typeof(google.maps) === "undefined") {
+            if (this.fetching_map_api == true) {
+                // console.log("inhibiting surnumerous call of drawmap");
+                return; // call already sent
+            };
+            this.fetching_map_api = true;
+            window.ginit = function() { self.draw_map(); };
+            $.getScript('//maps.googleapis.com/maps/api/js' +
+                        '?sensor=false&async=true&callback=ginit');
+            return;
+        }
+
+        var OPTIONS = {
+            zoom: 16,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
         try {
 
           var lat_lng = this.get_lat_lng();

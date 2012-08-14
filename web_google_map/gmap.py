@@ -35,23 +35,3 @@ class res_partner_address(osv.osv):
     }
 
 res_partner_address()
-
-
-
-
-## XXXvlab: monkey patching html_template
-
-from web.controllers import main
-
-
-def insert_before(source, search, insert_string):
-    idx = source.find(search)
-    return "%s%s%s" % (source[:idx], insert_string, source[idx:])
-
-
-def insert_js(src):
-    js_decl = '<script type="text/javascript" src="%s"></script>\n        ' % src
-    main.html_template = insert_before(main.html_template, '%(js)', js_decl)
-
-
-insert_js('//maps.googleapis.com/maps/api/js?sensor=false')
