@@ -23,10 +23,10 @@ from osv import osv
 from osv import fields
 
 
-class res_partner_address(osv.osv):
+class res_partner(osv.osv):
 
-    _name = 'res.partner.address'
-    _inherit = 'res.partner.address'
+    _name = 'res.partner'
+    _inherit = 'res.partner'
 
     _columns = {
         'lat': fields.float(u'Latitude', digits=(9, 6)),
@@ -34,4 +34,4 @@ class res_partner_address(osv.osv):
         'map': fields.dummy(),
     }
 
-res_partner_address()
+res_partner()

@@ -1,91 +1,57 @@
-/*global: openerp,document,setTimeout,alert */
+/*global: _,openerp,document,setTimeout,alert */
 
 openerp.web_google_map = function(instance) {
 
     console = window.console;
 
-    function getFixedValue(element, editMode) {
+    function getFixedValue(value) {
         try {
-            var fixedValue = editMode ? element.val() : element.get_value().toString();
-            if (fixedValue === "")
+            value = value.toString();
+            if (value === "")
                 return 0;
-            return parseFloat(fixedValue.replace(",", "."));
+            return parseFloat(value.replace(",", "."));
         } catch(e) {
             console.log(e);
         }
     }
 
-    function getAddress() {
-        var address = "";
-        var addressElements = [
-            $('input[name$="zip"]').val(),
-            $('input[name$="street"]').val(),
-            $('input[name$="street2"]').val(),
-            $('input[name$="city"]').val(),
-            $('input[name$="country_id_text"]').val(),
-            $('input[name$="state_id_text"]').val()
-        ];
-        var separator = "";
-        for (var i = 0; i < addressElements.length; i++) {
-            if (addressElements[i]) {
-                address += separator;
-                address += addressElements[i];
-                // Dirty but easy.
-                separator = ", ";
-            }
-        }
-
-        return address;
-    }
 
 
     // Form widget
 
     instance.web_google_map.form = {};
 
-    instance.web_google_map.form.FieldGoogleMap = instance.web.form.FieldChar.extend({
+    instance.web_google_map.form.FieldGoogleMap = instance.web.form.AbstractField.extend(instance.web.form.ReinitializeFieldMixin, {
         template: 'GoogleMap',
 
         init: function (view, node) {
             this._super(view, node);
+        },
 
-            // XXXvlab: all these fields should be part of the same widget
-            this.edit_mode = true;
+        destroy_content: function () {
         },
 
         get_lat_lng: function() {
             return [
-                getFixedValue(this.$latElement, this.edit_mode),
-                getFixedValue(this.$lngElement, this.edit_mode)
+                getFixedValue(this.widget_lat.get_value()),
+                getFixedValue(this.widget_lng.get_value())
             ];
         },
 
-        get_lat_lng_elements: function() {
-            this.widget_lat = this.view.fields.lat;
-            this.widget_lng = this.view.fields.lng;
-            if (this.edit_mode) {
-                this.$latElement = $('[name$="lat"]');
-                this.$lngElement = $('[name$="lng"]');
-            } else {
-                this.$latElement = this.widget_lat;
-                this.$lngElement = this.widget_lng;
-            }
-        },
 
-        start: function () {
+        initialize_content: function() {
+            // Gets called at each redraw of widget
+            //  - switching between read-only mode and edit mode
+            //  - BUT NOT when switching to next object.
             var self = this;
-            this._super.apply(this, arguments);
+            this.edit_mode = !this.get('effective_readonly');
 
             // XXXvlab: couldn't we put this just after rendering ?
-            this.$canvas = this.$element.find("div#gmap");
-            this.$msg_empty = this.$element.find("p.msg_empty");
+            this.$canvas = this.$el.find("div#gmap");
+            this.$msg_empty = this.$el.find("p.msg_empty");
 
-            if (this.edit_mode) {
-                this.$gc =      this.$element.find("button#gcb");
-                this.$refresh = this.$element.find("button#refresh");
-            }
-
-            this.get_lat_lng_elements();
+            this.widget_lat = this.view.fields.lat;
+            this.widget_lng = this.view.fields.lng;
 
             try {
                 $(document).ready(function () {
@@ -94,22 +60,40 @@ openerp.web_google_map = function(instance) {
                     }, 1000);
                 });
 
-                if (this.edit_mode) {
-                    this.$refresh.click(function () {
-                        self.draw_map();
-                    });
-                    this.$gc.click(function () {
-                        self.code_address();
-                    });
-                }
+                this.$el.on('click', '.btn_get_coordinate', function () {
+                    self.code_address();
+                });
+                this.$el.on('click', '.btn_refresh', function () {
+                    self.draw_map();
+                });
             } catch(e) {
                 console.log(e);
             }
+
+        },
+
+        get_address_from_current_form: function () {
+            var address = "";
+            var form_fields = this.view.fields;
+            return _(["zip", "street", "street2", "city",
+                      "state_id", "country_id"])
+                .chain()
+                .map(function(field_label) {
+                    var widget = form_fields[field_label];
+                    return (typeof widget.get_displayed !== "undefined") ?
+                        widget.get_displayed() : widget.get_value();
+                })
+                .filter(function (elt) {
+                    return typeof elt !== "undefined" &&
+                        elt !== false;
+                })
+                .value()
+                .join(", ");
         },
 
         code_address: function () {
             var self = this;
-            var address = getAddress();
+            var address = this.get_address_from_current_form();
             var geocoder = new google.maps.Geocoder();
 
             geocoder.geocode({'address': address}, function(results, status) {
@@ -122,13 +106,14 @@ openerp.web_google_map = function(instance) {
             });
         },
 
+        // Set lattitude and longitude widget content from google object
         set_lat_lng: function (obj) {
-            // object is google position object
-            this.widget_lat.set_value(obj.lat());
-            this.widget_lng.set_value(obj.lng());
-            this.widget_lat.on_ui_change();
-            this.widget_lng.on_ui_change();
-            this.update_dom();
+            this.widget_lat.$el.find('input').val(obj.lat());
+            // will set value from dom AND set the form dirty
+            this.widget_lat.store_dom_value();
+            this.widget_lng.$el.find('input').val(obj.lng());
+            // will set value from dom AND set the form dirty
+            this.widget_lng.store_dom_value();
         },
 
         update_dom: function() {
@@ -193,24 +178,6 @@ openerp.web_google_map = function(instance) {
 
     instance.web.form.widgets = instance.web.form.widgets.extend({
         'gmap': 'openerp.web_google_map.form.FieldGoogleMap',
-    });
-
-    // Page widget
-
-    instance.web_google_map.page = {};
-
-    instance.web_google_map.page.FieldGoogleMap = instance.web_google_map.form.FieldGoogleMap.extend({
-        template: 'GoogleMapReadonly',
-
-        init: function (view, node) {
-            this._super(view, node);
-            this.edit_mode = false;
-        },
-
-    });
-
-    instance.web.page.readonly = instance.web.page.readonly.extend({
-        'gmap': 'openerp.web_google_map.page.FieldGoogleMap',
     });
 
 };

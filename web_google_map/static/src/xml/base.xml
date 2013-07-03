@@ -4,16 +4,12 @@
 <templates id="template" xml:space="preserve">
 
   <t t-name="GoogleMap">
-    <p class="msg_empty">Please, click the &#147;Get coordinates&#148; button 
-    to geocode the address and draw the map.</p>
-    <div id="gmap"></div>
-    <button id="gcb" type="button">Get coordinates</button>
-    <button id="refresh" type="button">Refresh</button>
-  </t>
-
-  <t t-name="GoogleMapReadonly">
-    <p class="msg_empty"></p>
-    <div id="gmap"></div>
+    <div class="oe_gmap">
+      <p class="msg_empty oe_edit_only">Please, click the &#147;Get coordinates&#148; button to geocode the address and draw the map.</p>
+      <div id="gmap"></div>
+      <button type="button" class="oe_edit_only btn_get_coordinate">Get coordinates</button>
+      <button type="button" class="oe_edit_only btn_refresh">Refresh</button>
+    </div>
   </t>
 
 </templates>

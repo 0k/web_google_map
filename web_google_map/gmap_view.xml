@@ -1,50 +1,14 @@
 <?xml version="1.0"?>
 <openerp>
     <data>
-
-        <record model="ir.ui.view" id="view_partner_address_form1_inheritg">
-            <field name="name">res.partner.address.form1.inheritg</field>
-            <field name="model">res.partner.address</field>
-            <field name="inherit_id" ref="base.view_partner_address_form1"/>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form>
-                    <group colspan="4" col="4">
-                        <separator string="Map" colspan="4" />
-                        <field name="lat" colspan="1" />
-                        <field name="lng" colspan="1" />
-                        <field name="map" nolabel="1"
-                               widget="gmap" colspan="4" />
-
-                    </group>
-                </form>
-            </field>
-        </record>
-
-<!--
-        <record model="ir.ui.view" id="view_partner_address_form2_inheritg">
-            <field name="name">res.partner.address.form2.inheritg</field>
-            <field name="model">res.partner.address</field>
-            <field name="inherit_id" ref="base.view_partner_address_form2"/>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form>
-                    <newline />
-                    <field name="lat" />
-                    <field name="lng" />
-                    <field name="map" widget="gmap" />
-                </form>
-            </field>
-        </record>
--->
-
-        <record model="ir.ui.view" id="view_partner_form_inheritg">
-            <field name="name">res.partner.form.inheritg</field>
+        <record model="ir.ui.view" id="view_partner_form_inherit_gmap">
+            <field name="name">res.partner.form.inherit_gmap</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
-            <field name="type">form</field>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='address']/form" position="inside">
+
+                <xpath expr="//page[@string='Contacts']" position="after">
+                  <page string="Map">
                     <group colspan="4" col="4">
                         <separator string="Map" colspan="4" />
                         <field name="lat" colspan="1" />
@@ -52,9 +16,9 @@
                         <field name="map" nolabel="1"
                                widget="gmap" colspan="4" />
                     </group>
+                  </page>
                 </xpath>
             </field>
         </record>
-
     </data>
 </openerp>

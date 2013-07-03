@@ -20,8 +20,7 @@ msgstr ""
 #. openerp-web
 #: ../web_google_map/static/src/xml/base.xml:7
 msgid ""
-"Please, click the Get coordinates button \n"
-"    to geocode the address and draw the map."
+"Please, click the Get coordinates button to geocode the address and draw the map."
 msgstr ""
 "Cliquez sur le bouton 'Obtenir les coordonnées'\npour géolocaliser l'addresse et afficher la carte."
 
