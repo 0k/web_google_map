@@ -1,3 +1,4 @@
+/*global: openerp,document,setTimeout,alert */
 
 openerp.web_google_map = function(instance) {
 
@@ -6,13 +7,12 @@ openerp.web_google_map = function(instance) {
   function getFixedValue(element, editMode) {
     try {
       var fixedValue = editMode ? element.val() : element.get_value().toString();
-      if (fixedValue == "")
+      if (fixedValue === "")
         return 0;
       return parseFloat(fixedValue.replace(",", "."));
     } catch(e) {
       console.log(e);
     }
-
   }
 
   function getAddress() {
@@ -61,8 +61,8 @@ openerp.web_google_map = function(instance) {
       },
 
       get_lat_lng_elements: function() {
-        this.widget_lat = this.view.fields['lat'];
-        this.widget_lng = this.view.fields['lng'];
+        this.widget_lat = this.view.fields.lat;
+        this.widget_lng = this.view.fields.lng;
         if (this.edit_mode) {
           this.$latElement = $('[name$="lat"]');
           this.$lngElement = $('[name$="lng"]');
@@ -83,7 +83,7 @@ openerp.web_google_map = function(instance) {
         if (this.edit_mode) {
           this.$gc =      this.$element.find("button#gcb");
           this.$refresh = this.$element.find("button#refresh");
-        };
+        }
 
         this.get_lat_lng_elements();
 
@@ -101,7 +101,7 @@ openerp.web_google_map = function(instance) {
             this.$gc.click(function () {
                 self.code_address();
             });
-          };
+          }
         } catch(e) {
           console.log(e);
         }
@@ -116,8 +116,8 @@ openerp.web_google_map = function(instance) {
             if (status == google.maps.GeocoderStatus.OK) {
               self.set_lat_lng(results[0].geometry.location);
             } else {
-              alert("Geocode was not successful for the following reason: "
-                    + status);
+              alert("Geocode was not successful for the following reason: " +
+                    status);
             }
           });
       },
@@ -128,7 +128,7 @@ openerp.web_google_map = function(instance) {
         this.widget_lng.set_value(obj.lng());
         this.widget_lat.on_ui_change();
         this.widget_lng.on_ui_change();
-        this.update_dom()
+        this.update_dom();
       },
 
       update_dom: function() {
@@ -142,10 +142,10 @@ openerp.web_google_map = function(instance) {
         // Load google map api if necessary
         if (typeof(google) === "undefined" ||
             typeof(google.maps) === "undefined") {
-            if (this.fetching_map_api == true) {
+            if (this.fetching_map_api === true) {
                 // console.log("inhibiting surnumerous call of drawmap");
                 return; // call already sent
-            };
+            }
             this.fetching_map_api = true;
             window.ginit = function() { self.draw_map(); };
             $.getScript('//maps.googleapis.com/maps/api/js' +
@@ -161,12 +161,12 @@ openerp.web_google_map = function(instance) {
         try {
 
           var lat_lng = this.get_lat_lng();
-          if (lat_lng[0] == 0 || isNaN(lat_lng[0]) || lat_lng[1] == 0 || 
+          if (lat_lng[0] === 0 || isNaN(lat_lng[0]) || lat_lng[1] === 0 ||
               isNaN(lat_lng[1])) {
             this.$msg_empty.show();
             this.$canvas.hide();
             return;
-          };
+          }
 
           var point = new google.maps.LatLng(lat_lng[0], lat_lng[1]);
           this.$msg_empty.hide();
