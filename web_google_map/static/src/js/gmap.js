@@ -111,6 +111,65 @@ openerp.web_google_map = function(instance) {
         }
         return def;
     }
+
+    /**
+     * Returns a single string from given record
+     */
+    function get_place_from_record(record) {
+        return _(["zip", "street", "street2", "city",
+                  "state_id", "country_id"])
+            .chain()
+            .map(function(field_label) {
+                return record[field_label];
+            })
+            .filter(function (elt) {
+                return typeof elt !== "undefined" &&
+                    elt !== false;
+            })
+            .map(function(address_element) {
+                // removing comma's in adress elements
+                return address_element.replace(/,/g, " ");
+            })
+            .value()
+            .join(", ");
+    }
+    /**
+     * Adds a marker to existing google map by location object.
+     */
+    function _add_marker_by_location($gmap, location, options) {
+        options = options || {};
+        var gpos = new google.maps.LatLng(location.lat, location.lng);
+        $.extend(options, {
+            position: gpos
+        });
+        $gmap.gmap('addBounds', gpos);
+        return $gmap.gmap('addMarker', options);
+    }
+
+    /**
+     * Adds a marker to existing google map by place (a single string address)
+     * This includes geocoding the address.
+     */
+    function _add_marker_by_place ($gmap, place, options) {
+        var def = $.Deferred();
+        geocode_place(place).then(function (location) {
+            marker = _add_marker_by_location($gmap, location, options);
+            def.resolve(marker);
+        });
+        return def.promise();
+    }
+
+    /**
+     * Return a $.Def for a location object from a given address record
+     */
+    function geocode_address_record(record) {
+        var place = get_place_from_record(record);
+        return geocode_place(place);
+    }
+
+    /**
+     * Returns a float from an unspecified typed value.
+     */
     function getFixedValue(value) {
         try {
             value = value.toString();
@@ -123,11 +182,19 @@ openerp.web_google_map = function(instance) {
     }
 
 
+    /**
+     *  Form Field widget
+     *
+     */
 
-    // Form widget
 
     instance.web_google_map.form = {};
 
+
+    /**
+     * Geocodes the adress to put it in ``lat`` and ``lng`` fields
+     * and shows it on a map.
+     */
     instance.web_google_map.form.FieldGoogleMap = instance.web.form.AbstractField.extend(instance.web.form.ReinitializeFieldMixin, {
         template: 'GoogleMap',
 
@@ -138,13 +205,44 @@ openerp.web_google_map = function(instance) {
         destroy_content: function () {
         },
 
-        get_lat_lng: function() {
-            return [
-                getFixedValue(this.widget_lat.get_value()),
-                getFixedValue(this.widget_lng.get_value())
-            ];
+        /**
+         * Return current geocoded record from field widgets.
+         */
+        get_location: function() {
+            return {
+                'lat': getFixedValue(this.widget_lat.get_value()),
+                'lng': getFixedValue(this.widget_lng.get_value()),
+            };
         },
 
+        /**
+         * Set lattitude and longitude widget content from a geocoded record
+         */
+        set_location: function (record) {
+            this.widget_lat.$el.find('input').val(record.lat);
+            // will set value from dom AND set the form dirty
+            this.widget_lat.store_dom_value();
+            this.widget_lng.$el.find('input').val(record.lng);
+            // will set value from dom AND set the form dirty
+            this.widget_lng.store_dom_value();
+        },
+
+        /**
+         * Returns a single string from widget values of ``zip``, ``street``, ...
+         */
+        get_record: function () {
+            var form_fields = this.view.fields;
+            var record = {};
+            _(["zip", "street", "street2", "city",
+                      "state_id", "country_id"])
+                .each(function(field_label) {
+                    var widget = form_fields[field_label];
+                    record[field_label] =
+                        (typeof widget.get_displayed !== "undefined") ?
+                        widget.get_displayed() : widget.get_value();
+                });
+            return record;
+        },
 
         initialize_content: function() {
             // Gets called at each redraw of widget
@@ -153,7 +251,6 @@ openerp.web_google_map = function(instance) {
             var self = this;
             this.edit_mode = !this.get('effective_readonly');
 
-            // XXXvlab: couldn't we put this just after rendering ?
             this.$canvas = this.$el.find("div#gmap");
             this.$msg_empty = this.$el.find("p.msg_empty");
 
@@ -168,7 +265,11 @@ openerp.web_google_map = function(instance) {
                 });
 
                 this.$el.on('click', '.btn_get_coordinate', function () {
-                    self.code_address();
+                    var record = self.get_record();
+                    geocode_address_record(record).then(function (location) {
+                        self.set_location(location);
+                        self.draw_map();
+                    });
                 });
                 this.$el.on('click', '.btn_refresh', function () {
                     self.draw_map();
@@ -179,109 +280,72 @@ openerp.web_google_map = function(instance) {
 
         },
 
-        get_address_from_current_form: function () {
-            var address = "";
-            var form_fields = this.view.fields;
-            return _(["zip", "street", "street2", "city",
-                      "state_id", "country_id"])
-                .chain()
-                .map(function(field_label) {
-                    var widget = form_fields[field_label];
-                    return (typeof widget.get_displayed !== "undefined") ?
-                        widget.get_displayed() : widget.get_value();
-                })
-                .filter(function (elt) {
-                    return typeof elt !== "undefined" &&
-                        elt !== false;
-                })
-                .value()
-                .join(", ");
-        },
-
-        code_address: function () {
-            var self = this;
-            var address = this.get_address_from_current_form();
-            var geocoder = new google.maps.Geocoder();
-
-            geocoder.geocode({'address': address}, function(results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    self.set_lat_lng(results[0].geometry.location);
-                } else {
-                    alert("Geocode was not successful for the following reason: " +
-                          status);
-                }
-            });
-        },
-
-        // Set lattitude and longitude widget content from google object
-        set_lat_lng: function (obj) {
-            this.widget_lat.$el.find('input').val(obj.lat());
-            // will set value from dom AND set the form dirty
-            this.widget_lat.store_dom_value();
-            this.widget_lng.$el.find('input').val(obj.lng());
-            // will set value from dom AND set the form dirty
-            this.widget_lng.store_dom_value();
-        },
-
         update_dom: function() {
+            debugger;
             this._super.apply(this, arguments);
             this.draw_map();
         },
 
+        render_value: function() {
+            // Gets called at each redraw/save of widget
+            //  - switching between read-only mode and edit mode
+            //  - when switching to next object.
+            this.draw_map();
+        },
+
+        google_ensure_map_loaded: function() {
+            return google_ensure_module_loaded("maps", "3", {
+                // Thanks: http://stackoverflow.com/questions/5296115/can-you-load-google-maps-api-v3-via-google-ajax-api-loader
+                other_params: "sensor=false",
+                async: 'true'});
+        },
+
         draw_map: function () {
             var self = this;
+            this.google_ensure_map_loaded().then(function() {
 
-            // Load google map api if necessary
-            if (typeof(google) === "undefined" ||
-                typeof(google.maps) === "undefined") {
-                if (this.fetching_map_api === true) {
-                    // console.log("inhibiting surnumerous call of drawmap");
-                    return; // call already sent
-                }
-                this.fetching_map_api = true;
-                window.ginit = function() { self.draw_map(); };
-                $.getScript('//maps.googleapis.com/maps/api/js' +
-                            '?sensor=false&async=true&callback=ginit');
-                return;
-            }
+                var OPTIONS = {
+                    zoom: 16,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
 
-            var OPTIONS = {
-                zoom: 16,
-                mapTypeId: google.maps.MapTypeId.ROADMAP
-            };
+                try {
+                    var location = self.get_location();
+                    if (location.lat === 0 || isNaN(location.lat) ||
+                        location.lng === 0 || isNaN(location.lng)) {
+                        self.$msg_empty.show();
+                        self.$canvas.hide();
+                        return;
+                    }
 
-            try {
-
-                var lat_lng = this.get_lat_lng();
-                if (lat_lng[0] === 0 || isNaN(lat_lng[0]) || lat_lng[1] === 0 ||
-                    isNaN(lat_lng[1])) {
-                    this.$msg_empty.show();
-                    this.$canvas.hide();
-                    return;
-                }
-
-                var point = new google.maps.LatLng(lat_lng[0], lat_lng[1]);
-                this.$msg_empty.hide();
-                this.$canvas.show(500, function() {
-                    // XXXvlab: cache this object !
-                    var map = new google.maps.Map(self.$canvas[0], OPTIONS);
-                    var marker = new google.maps.Marker({
-                        'map': map,
-                        'position': point,
-                        'draggable': self.edit_mode
-                    });
-                    if (self.edit_mode)
-                        google.maps.event.addListener(marker, "dragend", function() {
-                            self.set_lat_lng(marker.getPosition());
+                    var point = new google.maps.LatLng(location.lat, location.lng);
+                    self.$msg_empty.hide();
+                    self.$canvas.show(500, function() {
+                        var map = new google.maps.Map(self.$canvas[0], OPTIONS);
+                        var marker = new google.maps.Marker({
+                            'map': map,
+                            'position': point,
+                            'draggable': self.edit_mode
                         });
-                    map.setCenter(point);
-                });
-            } catch (e) {
-                console.log(e);
-            }
+                        if (self.edit_mode)
+                            google.maps.event.addListener(marker, "dragend", function() {
+                                var location = _position_to_location(marker.getPosition());
+                                self.set_location(location);
+                            });
+                        map.setCenter(point);
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+            });
         }
-
     });
+
+
+
+
+
+
 
     instance.web.form.widgets = instance.web.form.widgets.extend({
         'gmap': 'openerp.web_google_map.form.FieldGoogleMap',
