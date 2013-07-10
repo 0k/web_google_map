@@ -52,6 +52,65 @@ openerp.web_google_map = function(instance) {
         });
         return instance.google_modules[module];
     }
+
+
+    // GEOCODING SERVICE
+
+    // This is set to be global to share the cache across one openerp instance
+    // of a client. Please bear in mind that a simple reload of the browser page
+    // clears it.
+    var _geocoding_cache = {};
+
+
+    /**
+     * Converts google position object to {'lat': X, 'lng': Y} format.
+     */
+    function _position_to_location(gpos) {
+        return {
+            'lat': gpos.lat(),
+            'lng': gpos.lng()
+        };
+    }
+
+    /**
+     * Return a $.Def location object from a place (single string address)
+     *
+     * This function will handle a geocoding cache that will retry refused
+     * queries.
+     */
+    function geocode_place(place) {
+        var def = $.Deferred();
+
+        var _geocoding_handle_response = function (results, status, deferred) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                // We only need the latitude and longitude
+                var gloc = results[0].geometry.location;
+                def.resolve(_position_to_location(gloc));
+            } else {
+                console.log("Place '"+ place + "' could not be resolved for the following reason: " +
+                            status);
+                deferred.reject(status);
+            }
+        };
+
+        if (place in _geocoding_cache &&
+            _geocoding_cache[place].status != "OVER_QUERY_LIMIT") {
+            setTimeout(function() {
+                var args = _geocoding_cache[place];
+                //console.log("cached " + place);
+                _geocoding_handle_response(args.results, args.status, def);
+            }, 0);
+        } else {
+            // console.log("not cached" + place);
+            var geocoder = new google.maps.Geocoder();
+            geocoder.geocode({'address': place}, function(results, status) {
+                _geocoding_cache[place] = {'results': results,
+                                           'status': status};
+                _geocoding_handle_response(results, status, def);
+            });
+        }
+        return def;
+    }
     function getFixedValue(value) {
         try {
             value = value.toString();
