@@ -2,8 +2,56 @@
 
 openerp.web_google_map = function(instance) {
 
-    console = window.console;
+    // GOOGLE generic lib code
 
+    /**
+     * Returns a $.Def which resolve once google jsapi is loaded.
+     *
+     * It will make sure not to load twice jsapi, and the returned deferred will
+     * be already resolved if lib is already loaded.
+     */
+    function google_ensure_jsapi_loaded() {
+        if (typeof(instance.google_jsapi_loaded) !== "undefined") {
+            // please wait until the first call finishes:
+            return instance.google_jsapi_loaded;
+        }
+
+        instance.google_jsapi_loaded = $.Deferred();
+        window.ginit = function() {
+            instance.google_jsapi_loaded.resolve();
+        };
+        console.log('Loading Google jsapi.');
+        $.getScript('//www.google.com/jsapi' +
+                    '?sensor=false&async=true&callback=ginit');
+        return instance.google_jsapi_loaded;
+    }
+
+    /**
+     * Returns a $.Def which resolve once google module is loaded.
+     *
+     * It will make sure not to load twice a module, and the returned deferred will
+     * be already resolved if lib already loaded.
+     */
+    function google_ensure_module_loaded(module, version, options) {
+        if (typeof(instance.google_modules) === "undefined") {
+            instance.google_modules = {};
+        }
+        if (typeof(instance.google_modules[module]) !== "undefined") {
+            // please wait until the first call finishes
+            return instance.google_modules[module];
+        }
+        instance.google_modules[module] = $.Deferred();
+        google_ensure_jsapi_loaded().then(function() {
+            console.log('Loading Google module: ' + module);
+            $.extend(options, {
+                callback: function() {
+                    instance.google_modules[module].resolve();
+                }
+            });
+            google.load(module, version, options);
+        });
+        return instance.google_modules[module];
+    }
     function getFixedValue(value) {
         try {
             value = value.toString();
@@ -181,32 +229,4 @@ openerp.web_google_map = function(instance) {
     });
 
 };
-
-// function load_js(urls) {
-//   var self = this;
-//   var d = $.Deferred();
-//   if(urls.length != 0) {
-//     var url = urls.shift();
-//     var tag = document.createElement('script');
-//     tag.type = 'text/javascript';
-//     tag.src = url;
-//     tag.onload = tag.onreadystatechange = function() {
-//       if ( (tag.readyState && tag.readyState != "loaded" && tag.readyState != "complete") || tag.onload_done )
-//         return;
-//       tag.onload_done = true;
-//       load_js(urls).then(function () {
-//           d.resolve();
-//         });
-//     };
-//     var head = document.head || document.getElementsByTagName('head')[0];
-//     head.appendChild(tag);
-//   } else {
-//     d.resolve();
-//   }
-//   return d;
-// };
-
-// load_js(['http://maps.googleapis.com/maps/api/js?sensor=false',])
-//     .then(on_google_loaded);
-
 
