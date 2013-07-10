@@ -257,26 +257,42 @@ openerp.web_google_map = function(instance) {
             this.widget_lat = this.view.fields.lat;
             this.widget_lng = this.view.fields.lng;
 
-            try {
-                $(document).ready(function () {
-                    setTimeout(function() {
-                        self.draw_map();
-                    }, 1000);
-                });
 
-                this.$el.on('click', '.btn_get_coordinate', function () {
-                    var record = self.get_record();
-                    geocode_address_record(record).then(function (location) {
-                        self.set_location(location);
-                        self.draw_map();
+            // In forms, we could be hidden in a notebook. Thus we couldn't
+            // render correctly maps so we try to detect when we are not
+            // visible to wait for when we will be visible.
+            if (this.$canvas[0].offsetWidth === 0) {
+                // In forms, we could be hidden in a notebook. Thus we couldn't
+                // render correctly maps so we try to detect when we are not
+                // visible to wait for when we will be visible.
+                if (self.$canvas[0].offsetWidth === 0) {
+                    self.$canvas.parents(".ui-tabs").on('tabsactivate', self, function() {
+                        if (self.$canvas[0].offsetWidth !== 0) { // visible
+                            self.draw_map();
+                        }
                     });
-                });
-                this.$el.on('click', '.btn_refresh', function () {
+                }
+            }
+            $(document).ready(function () {
+                // Without this timeout, the google map window doesn't
+                // take all the frame size for some reason.
+                setTimeout(function() {
+                    console.log("Draw map by timeout");
+                    self.draw_map();
+                }, 1000);
+            });
+
+
+            this.$el.on('click', '.btn_get_coordinate', function () {
+                var record = self.get_record();
+                geocode_address_record(record).then(function (location) {
+                    self.set_location(location);
                     self.draw_map();
                 });
-            } catch(e) {
-                console.log(e);
-            }
+            });
+            this.$el.on('click', '.btn_refresh', function () {
+                self.draw_map();
+            });
 
         },
 
