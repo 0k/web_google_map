@@ -2,6 +2,10 @@
 
 openerp.web_google_map = function(instance) {
 
+    var QWeb = instance.web.qweb,
+        _t  = instance.web._t,
+        _lt = instance.web._lt;
+
     // GOOGLE generic lib code
 
     /**
@@ -51,6 +55,24 @@ openerp.web_google_map = function(instance) {
             google.load(module, version, options);
         });
         return instance.google_modules[module];
+    }
+
+    // GET JQUERY UI MAP
+
+    // XXXvlab: should implement a full lib of dynamic js loading.
+    function ensure_jquery_ui_map_loaded() {
+        if (typeof(instance.jquery_ui_map_loaded) !== "undefined") {
+            // please wait until the first call finishes:
+            return instance.jquery_ui_map_loaded;
+        }
+
+        instance.jquery_ui_map_loaded = $.Deferred();
+        console.log('Loading jquery.ui.map.js');
+        $.getScript('/web_google_map/static/lib/js/jquery.ui.map.js',
+                    function() {
+                        instance.jquery_ui_map_loaded.resolve();
+                    });
+        return instance.jquery_ui_map_loaded;
     }
 
 
@@ -358,12 +380,187 @@ openerp.web_google_map = function(instance) {
     });
 
 
+    /**
+     * Shows a map with all records mapped along their ``lat`` and ``lng`` fields.
+     */
+    instance.web_google_map.form.FieldO2MGoogleMap = instance.web.form.AbstractField.extend(instance.web.form.ReinitializeFieldMixin, {
+        template: 'FieldO2MGoogleMap',
+
+        get_google_map_options: function() {
+            return {
+              zoom: 16,
+              mapTypeId: google.maps.MapTypeId.ROADMAP,
+            };
+        },
+
+        is_record_geocoded: function(record) {
+            return typeof(record['lat']) !== "undefined" &&
+                typeof(record['lng']) !== "undefined";
+        },
+
+        get_location_from_record: function(record) {
+            return {
+                'lat': record['lat'],
+                'lng': record['lng'],
+            };
+        },
+
+        /**
+         * Adds a marker to existing google map for given record
+         * The record will be queried to see if it contains already
+         * some geocoding information.
+         */
+        add_marker: function (record, options) {
+            if (this.is_record_geocoded(record)) {
+                var location = this.get_location_from_record(record);
+                return $.when(
+                    _add_marker_by_location(this.$gmap, location, options));
+            } else {
+                var place = get_place_from_record(record);
+                // This includes geocoding the address
+                return _add_marker_by_place(this.$gmap, place, options);
+            }
+        },
+
+        set_value: function(value_) {
+            this._super(value_);
+          },
+
+        get_value: function() {
+            return this.get('value');
+        },
+
+        init: function () {
+            this._super.apply(this, arguments);
+            this.gmap = null;
+        },
+
+        destroy_content: function () {
+            if (typeof(this.$gmap.gmap) !== "undefined") {
+                this.$gmap.gmap("destroy");
+            }
+        },
+
+        google_ensure_map_loaded: function() {
+            return google_ensure_module_loaded("maps", "3", {
+                // Thanks: http://stackoverflow.com/questions/5296115/can-you-load-google-maps-api-v3-via-google-ajax-api-loader
+                other_params: "sensor=false",
+                async: 'true'});
+        },
+
+        initialize_content: function() {
+            // Gets called at each redraw of widget
+            //  - switching between read-only mode and edit mode
+            //  - BUT NOT when switching to next object.
+            this.edit_mode = !this.get('effective_readonly');
+
+            this.$gmap = this.$el.find("div.oe_web_google_map.map");
+            this.$msg_empty = this.$el.find("p.msg_empty");
+            this.initialize_map();
+        },
+
+        // XXXvlab: obsolete code ? or not usefull until write mode is implemented ?
+        // update_dom: function() {
+        //     this._super.apply(this, arguments);
+        //     debugger;
+        //     this.draw_map();
+        // },
+
+        initialize_map: function () {
+            var self = this;
+            this.$gmap.show();
+            // should implement a javascript loading and dependency system
+            this.google_ensure_map_loaded().then(function() {
+                ensure_jquery_ui_map_loaded().then(function() {
+
+                    // In forms, we could be hidden in a notebook. Thus we couldn't
+                    // render correctly maps so we try to detect when we are not
+                    // visible to wait for when we will be visible.
+                    if (self.$gmap[0].offsetWidth === 0) {
+                        self.$gmap.parents(".ui-tabs").on('tabsactivate', self, function() {
+                            if (self.$gmap[0].offsetWidth !== 0) { // visible
+                                self.draw_map();
+                            }
+                        });
+                    }
+                    $(document).ready(function () {
+                        // Without this timeout, the google map window doesn't
+                        // take all the frame size for some reason.
+                        setTimeout(function() {
+                            console.log("Draw map by timeout");
+                            self.draw_map();
+                        }, 1000);
+                    });
+                });
+            });
+
+        },
+
+        draw_map: function () {
+            if (this.$gmap[0].offsetWidth === 0) { // visible
+                console.log("prevented drawing map on non-sized div");
+                return;
+            }
+            console.log('Creating map');
+            this.gmap = this.$gmap.gmap(
+                this.get_google_map_options());
+            this.set_markers();
+        },
 
 
+        clear_map: function() {
+            this.$gmap.gmap('clear', 'bounds');
+            this.$gmap.gmap('set', 'bounds', new google.maps.LatLngBounds());
+            this.$gmap.gmap('clear', 'markers');
+            this.$gmap.gmap('clear', 'services');
+            this.$gmap.gmap('clear', 'overlays', true);
+        },
 
+        render_value: function() {
+            // Gets called at each redraw/save of widget
+            //  - switching between read-only mode and edit mode
+            //  - when switching to next object.
+            this.initialize_map();
+        },
 
+        set_markers: function () {
+            var self = this;
+            var datarecords = (typeof this.get_value() !== "object") ? $.when() :
+                (new instance.web.Model(this.view.fields_view.fields[this.name].relation))
+                .call('read', [this.get_value(), false],
+                      {context: this.view.dataset.context});
+
+            $.when(datarecords).then(function(records) {
+                if (records && records.length) {
+                    self.$msg_empty.hide();
+                    self.$gmap.show(500, function() {
+                        self.clear_map();
+                        _(records).each(function(record) {
+                            self.add_marker(record).then(function(marker) {
+                                marker.click(function() {
+                                    var content = QWeb.render("GoogleMapInfoContent",
+                                                              {'record': record,
+                                                               'marker': marker});
+
+                                    self.$gmap.gmap(
+                                        'openInfoWindow',
+                                        {'content': content}, this);
+                                });
+                            });
+                        });
+                    });
+                } else {
+                    self.$msg_empty.show();
+                    self.$gmap.hide(500);
+                }
+            });
+        }
+
+    });
 
     instance.web.form.widgets = instance.web.form.widgets.extend({
+        'm2m_gmap': 'openerp.web_google_map.form.FieldO2MGoogleMap',
+        'o2m_gmap': 'openerp.web_google_map.form.FieldO2MGoogleMap',
         'gmap': 'openerp.web_google_map.form.FieldGoogleMap',
     });
 

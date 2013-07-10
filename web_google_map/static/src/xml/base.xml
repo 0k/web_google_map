@@ -12,4 +12,17 @@
     </div>
   </t>
 
+  <t t-name="FieldO2MGoogleMap">
+    <div class="oe_gmap">
+      <div class="oe_web_google_map map"></div>
+      <p class="msg_empty">No records to display on map.</p>
+    </div>
+  </t>
+
+  <t t-name="GoogleMapInfoContent">
+    <div class='google-info-content'>
+      <t t-esc="record.name" />
+    </div>
+  </t>
+
 </templates>
