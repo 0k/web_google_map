@@ -2,7 +2,7 @@ p#msg_empty {
     display: none;
 }
 
-div#gmap {
+div.oe_web_google_map.map {
     display: none;
 	width: 100%;
 	height: 300px;

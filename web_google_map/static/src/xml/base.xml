@@ -6,7 +6,7 @@
   <t t-name="GoogleMap">
     <div class="oe_gmap">
       <p class="msg_empty oe_edit_only">Please, click the &#147;Get coordinates&#148; button to geocode the address and draw the map.</p>
-      <div id="gmap"></div>
+      <div class="oe_web_google_map map"></div>
       <button type="button" class="oe_edit_only btn_get_coordinate">Get coordinates</button>
       <button type="button" class="oe_edit_only btn_refresh">Refresh</button>
     </div>

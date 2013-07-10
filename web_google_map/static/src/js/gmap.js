@@ -251,7 +251,7 @@ openerp.web_google_map = function(instance) {
             var self = this;
             this.edit_mode = !this.get('effective_readonly');
 
-            this.$canvas = this.$el.find("div#gmap");
+            this.$canvas = this.$el.find("div.oe_web_google_map.map");
             this.$msg_empty = this.$el.find("p.msg_empty");
 
             this.widget_lat = this.view.fields.lat;
