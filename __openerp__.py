@@ -13,7 +13,10 @@ OpenERP Web Map
 Web Map module brings Google Map support right into OpenERP web-client.
 
 Version for 6.0 was brought by Infosreda LLC.
-Conversion to 6.1 needed a full rewrite from simplee.fr and was funded by CARIF/OREF.
+
+Conversion to 6.1 needed a full rewrite from simplee.fr and was funded
+by CARIF/OREF.
+
 Version 7.0 needed adaptation from 0k.io and was funded by CARIF/OREF.
 
 Usage
@@ -50,9 +53,9 @@ you need to do is just put the next string to the view.
     'active': True,
     'web': True,
     'js': [
-           'static/src/js/gmap.js',
-	    ],
+        'static/src/js/gmap.js',
+    ],
     'css': ['static/src/css/gmap.css', ],
     'qweb': ['static/src/xml/base.xml', ],
-    'images': ['images/map.png',],
+    'images': ['images/map.png', ],
 }
