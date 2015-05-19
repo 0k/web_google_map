@@ -13,5 +13,3 @@ class res_partner(osv.osv):
         'lng': fields.float(u'Longitude', digits=(9, 6)),
         'map': fields.dummy(),
     }
-
-res_partner()

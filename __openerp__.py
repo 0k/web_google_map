@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 {
-    'name': 'Web Map',
-    'version': '0.4.0',
+    'name': 'Web Google Map',
+    'version': '0.5.0',
     'category': 'Added functionality / Widgets',
     'description': """
 
@@ -48,14 +48,13 @@ you need to do is just put the next string to the view.
     'author': 'simplee.fr - Infosreda LLC',
     'website': 'http://github.com/0k/web_google_map',
     'depends': ['base', 'web'],
-    'data': ['gmap_view.xml'],
+    'data': [
+        'views/template.xml',
+        'views/gmap_view.xml',
+    ],
     'update_xml': [],
     'active': True,
     'web': True,
-    'js': [
-        'static/src/js/gmap.js',
-    ],
-    'css': ['static/src/css/gmap.css', ],
     'qweb': ['static/src/xml/base.xml', ],
     'images': ['images/map.png', ],
 }
